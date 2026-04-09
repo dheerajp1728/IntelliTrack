@@ -185,19 +185,6 @@ Software_Engineering_Project/
 
 ---
 
-## Running Ports
-
-| Service | URL |
-|---|---|
-| Frontend | http://localhost:5173 |
-| Backend API | http://localhost:8000 |
-| API Docs | http://localhost:8000/docs |
-| AI Service | http://localhost:8004 |
-| Qdrant | http://localhost:6333 |
-| LM Studio | http://localhost:1234 |
-
----
-
 ## Team
 
 Built as part of a Software Engineering course project.
