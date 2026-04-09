@@ -1,0 +1,183 @@
+/* Split-screen login layout */
+.login-split {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  min-height: 100vh;
+  background: #000;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+}
+
+/* Left side — form */
+.login-form-side {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  background: transparent;
+  position: relative;
+  z-index: 10;
+}
+
+.login-glass-card {
+  width: 100%;
+  max-width: 380px;
+}
+
+.login-dark-title {
+  margin: 0 0 32px;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #ea580c;
+  letter-spacing: 0.15em;
+  text-align: center;
+  font-family: "Saira Stencil", sans-serif;
+  font-optical-sizing: auto;
+  font-variation-settings: "wdth" 100;
+}
+
+/* Form */
+.login-dark-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  margin-bottom: 24px;
+}
+
+.login-dark-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.login-dark-field label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.login-dark-input {
+  width: 100% !important;
+  padding: 12px 14px !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: white !important;
+  font-size: 1rem !important;
+  font-family: inherit !important;
+  outline: none !important;
+  transition: all 0.25s ease !important;
+}
+
+.login-dark-input::placeholder {
+  color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.login-dark-input:focus {
+  border-color: rgba(99, 102, 241, 0.8) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.login-dark-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+}
+
+.login-dark-error {
+  color: #f87171;
+  font-size: 0.9rem;
+  padding: 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 8px;
+  border-left: 3px solid #ef4444;
+}
+
+/* Footer for register link */
+.login-dark-footer {
+  text-align: center;
+  padding-top: 20px;
+  margin-bottom: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.login-dark-footer p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.login-dark-switch {
+  background: none;
+  border: none;
+  color: #818cf8;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0;
+  font-size: 0.9rem;
+  transition: color 0.2s ease;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.login-dark-switch:hover {
+  color: #a5b4fc;
+}
+
+.login-dark-switch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Demo credentials */
+.login-dark-demo {
+  padding: 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.login-dark-demo .demo-head {
+  margin: 0 0 8px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 0.9rem;
+}
+
+.login-dark-demo p {
+  margin: 4px 0;
+}
+
+/* Right side — 3D Scene */
+.login-scene-side {
+  position: relative;
+  background: #000;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.scene-3d {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* Responsive — stack on mobile */
+@media (max-width: 900px) {
+  .login-split {
+    grid-template-columns: 1fr;
+  }
+
+  .login-scene-side {
+    min-height: 400px;
+    order: -1;
+  }
+}
+
+@keyframes textShine {
+  0% { background-position: 0% 50%; }
+  100% { background-position: 100% 50%; }
+}

@@ -1,0 +1,181 @@
+/* Split-screen register layout (matches LoginPage.css) */
+.register-split {
+  display: grid;
+  grid-template-columns: 1fr 1.3fr;
+  min-height: 100vh;
+  background: #000;
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+}
+
+/* Left side — form */
+.register-form-side {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px;
+  background: transparent;
+  position: relative;
+  z-index: 10;
+}
+
+.register-glass-card {
+  width: 100%;
+  max-width: 420px;
+}
+
+.register-dark-title {
+  margin: 0 0 32px;
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #ea580c;
+  letter-spacing: 0.15em;
+  text-align: center;
+  font-family: "Saira Stencil", sans-serif;
+  font-optical-sizing: auto;
+  font-variation-settings: "wdth" 100;
+}
+
+/* Form */
+.register-dark-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.register-dark-field-row {
+  display: flex;
+  gap: 16px;
+}
+
+.register-dark-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.register-dark-field label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.register-dark-input {
+  width: 100% !important;
+  padding: 12px 14px !important;
+  border-radius: 10px !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  color: white !important;
+  font-size: 1rem !important;
+  font-family: inherit !important;
+  outline: none !important;
+  transition: all 0.25s ease !important;
+}
+
+.register-dark-select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e") !important;
+  background-repeat: no-repeat !important;
+  background-position: right 14px center !important;
+  background-size: 16px !important;
+  padding-right: 40px !important;
+}
+
+.register-dark-select option {
+  background: #0f172a;
+  color: white;
+}
+
+.register-dark-input::placeholder {
+  color: rgba(255, 255, 255, 0.25) !important;
+}
+
+.register-dark-input:focus {
+  border-color: rgba(99, 102, 241, 0.8) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2) !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+.register-dark-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+}
+
+.register-dark-error {
+  color: #f87171;
+  font-size: 0.9rem;
+  padding: 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border-radius: 8px;
+  border-left: 3px solid #ef4444;
+}
+
+/* Footer */
+.register-dark-footer {
+  text-align: center;
+  padding-top: 20px;
+  margin-bottom: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.register-dark-footer p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.register-dark-switch {
+  background: none;
+  border: none;
+  color: #818cf8;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 0;
+  font-size: 0.9rem;
+  transition: color 0.2s ease;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.register-dark-switch:hover {
+  color: #a5b4fc;
+}
+
+.register-dark-switch:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Right side — 3D Scene */
+.register-scene-side {
+  position: relative;
+  background: #000;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.scene-3d {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* Responsive */
+@media (max-width: 900px) {
+  .register-split {
+    grid-template-columns: 1fr;
+  }
+
+  .register-scene-side {
+    min-height: 400px;
+    order: -1;
+  }
+
+  .register-dark-field-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+}
