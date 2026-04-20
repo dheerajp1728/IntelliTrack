@@ -37,7 +37,8 @@ In Render Dashboard:
 - Root Directory: leave blank
 - Environment: `Python`
 - Build Command: `pip install -r requirements.txt`
-- Start Command: `alembic upgrade head && python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- Pre-Deploy Command: `alembic upgrade head`
+- Start Command: `python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 
 ### Backend Environment Variables
 
