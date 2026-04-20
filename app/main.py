@@ -3,7 +3,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-from fastapi import FastAPI, Depends, HTTPException, status, Query
+from fastapi import FastAPI, Depends, HTTPException, status, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel as PydanticModel
 from datetime import timedelta
@@ -40,6 +40,19 @@ from .auth import (
 from .seed import seed_data
 
 app = FastAPI(title="IntelliTract Workspace API")
+
+
+@app.middleware("http")
+async def support_api_prefix(request: Request, call_next):
+    path = request.scope.get("path", "")
+    if path == "/api" or path.startswith("/api/"):
+        scope = dict(request.scope)
+        scope["path"] = path[4:] or "/"
+        raw_path = scope.get("raw_path")
+        if isinstance(raw_path, bytes):
+            scope["raw_path"] = raw_path[4:] or b"/"
+        request = Request(scope, request.receive)
+    return await call_next(request)
 
 cors_origins = [
     origin.strip()

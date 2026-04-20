@@ -37,8 +37,7 @@ In Render Dashboard:
 - Root Directory: leave blank
 - Environment: `Python`
 - Build Command: `pip install -r requirements.txt`
-- Pre-Deploy Command: `alembic upgrade head`
-- Start Command: `python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+- Start Command: `alembic upgrade head && python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT`
 
 ### Backend Environment Variables
 
@@ -77,7 +76,7 @@ In Render Dashboard:
 Add this environment variable to the static site:
 
 ```env
-VITE_API_URL=https://intellitrack-backend.onrender.com/api
+VITE_API_URL=https://intellitrack-backend.onrender.com
 ```
 
 Replace the URL with the actual backend Render URL once created.

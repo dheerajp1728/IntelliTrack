@@ -10,8 +10,7 @@ services:
     runtime: python
     plan: free
     buildCommand: pip install -r requirements.txt
-    preDeployCommand: alembic upgrade head
-    startCommand: python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    startCommand: alembic upgrade head && python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
     healthCheckPath: /
     envVars:
       - key: DATABASE_URL
@@ -43,4 +42,4 @@ services:
     staticPublishPath: dist
     envVars:
       - key: VITE_API_URL
-        value: https://intellitrack-backend.onrender.com/api
+        value: https://intellitrack-backend.onrender.com
