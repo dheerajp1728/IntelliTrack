@@ -1396,15 +1396,141 @@ def admin_reset(db: Session = Depends(get_db)):
     return {"message": "All projects, sprints, and issues have been deleted."}
 
 
-# ── AI Progress Analysis (Ollama-powered, fully local) ───────────────────────
+# ── AI Progress Analysis ──────────────────────────────────────────────────────
 
-OLLAMA_BASE = "http://localhost:11434"
-OLLAMA_MODEL = "llama3.2"  # change to any model you have pulled, e.g. mistral, llama3, codellama
+AI_PROVIDER = os.getenv("AI_PROVIDER", "ollama").strip().lower()
+OLLAMA_BASE = os.getenv("OLLAMA_BASE", "http://localhost:11434").rstrip("/")
+OLLAMA_MODEL = os.getenv("OLLAMA_MODEL", "llama3.2")
+AI_API_BASE = os.getenv("AI_API_BASE", "https://api.openai.com/v1").rstrip("/")
+AI_API_KEY = os.getenv("AI_API_KEY", "").strip()
+AI_MODEL = os.getenv("AI_MODEL", "gpt-4o-mini")
 
 class AIAnalyzeRequest(PydanticModel):
     repo_url: str
     github_token: Optional[str] = None
     tasks: str
+
+
+def _ai_target_config() -> dict:
+    if AI_PROVIDER == "ollama":
+        return {
+            "provider": "ollama",
+            "base": OLLAMA_BASE,
+            "model": OLLAMA_MODEL,
+            "configured": True,
+        }
+
+    return {
+        "provider": AI_PROVIDER,
+        "base": AI_API_BASE,
+        "model": AI_MODEL,
+        "configured": bool(AI_API_KEY),
+    }
+
+
+def _check_ai_health() -> dict:
+    import requests as req
+
+    target = _ai_target_config()
+    if target["provider"] == "ollama":
+        try:
+            req.get(f"{target['base']}/api/tags", timeout=3)
+            return {"status": "online", **target}
+        except Exception:
+            return {
+                "status": "offline",
+                **target,
+                "detail": "Cannot reach the configured Ollama-compatible endpoint.",
+            }
+
+    if not target["configured"]:
+        return {
+            "status": "offline",
+            **target,
+            "detail": "Missing AI_API_KEY for hosted AI provider.",
+        }
+
+    try:
+        resp = req.get(
+            f"{target['base']}/models",
+            headers={"Authorization": f"Bearer {AI_API_KEY}"},
+            timeout=5,
+        )
+        if resp.status_code < 400:
+            return {"status": "online", **target}
+        return {
+            "status": "offline",
+            **target,
+            "detail": f"Hosted AI provider returned HTTP {resp.status_code}.",
+        }
+    except Exception:
+        return {
+            "status": "offline",
+            **target,
+            "detail": "Cannot reach the configured hosted AI provider.",
+        }
+
+
+def _call_ai_model(prompt: str) -> str:
+    import requests as req
+
+    target = _ai_target_config()
+
+    if target["provider"] == "ollama":
+        try:
+            resp = req.post(
+                f"{target['base']}/api/chat",
+                json={
+                    "model": target["model"],
+                    "messages": [{"role": "user", "content": prompt}],
+                    "stream": False,
+                    "options": {"temperature": 0.1},
+                },
+                timeout=180,
+            )
+            if resp.status_code != 200:
+                raise HTTPException(status_code=502, detail=f"Ollama error {resp.status_code}: {resp.text[:200]}")
+            return resp.json()["message"]["content"].strip()
+        except req.exceptions.ConnectionError:
+            raise HTTPException(
+                status_code=503,
+                detail=(
+                    f"Cannot reach AI model service at {target['base']}. "
+                    "If you are running locally, start Ollama with: ollama serve"
+                ),
+            )
+        except req.exceptions.Timeout:
+            raise HTTPException(status_code=504, detail="Ollama timed out. Try a smaller repo or fewer tasks.")
+
+    if not target["configured"]:
+        raise HTTPException(
+            status_code=503,
+            detail="Hosted AI provider is not configured. Set AI_PROVIDER, AI_API_KEY, and AI_MODEL.",
+        )
+
+    try:
+        resp = req.post(
+            f"{target['base']}/chat/completions",
+            headers={
+                "Authorization": f"Bearer {AI_API_KEY}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": target["model"],
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.1,
+                "response_format": {"type": "json_object"},
+            },
+            timeout=180,
+        )
+        if resp.status_code != 200:
+            raise HTTPException(status_code=502, detail=f"Hosted AI error {resp.status_code}: {resp.text[:200]}")
+        payload = resp.json()
+        return payload["choices"][0]["message"]["content"].strip()
+    except req.exceptions.ConnectionError:
+        raise HTTPException(status_code=503, detail=f"Cannot reach hosted AI provider at {target['base']}.")
+    except req.exceptions.Timeout:
+        raise HTTPException(status_code=504, detail="Hosted AI provider timed out. Try a smaller repo or fewer tasks.")
 
 
 def _fetch_repo_code(repo_url: str, token: Optional[str]) -> str:
@@ -1455,13 +1581,8 @@ def _fetch_repo_code(repo_url: str, token: Optional[str]) -> str:
 
 @app.get("/ai/health")
 def ai_health():
-    """Check whether Ollama is reachable at localhost:11434."""
-    import requests as req
-    try:
-        req.get(f"{OLLAMA_BASE}/api/tags", timeout=3)
-        return {"status": "online"}
-    except Exception:
-        return {"status": "offline"}
+    """Check whether the configured AI provider is reachable."""
+    return _check_ai_health()
 
 
 @app.post("/ai/analyze")
@@ -1500,23 +1621,7 @@ Respond ONLY with valid JSON — no extra text, no markdown fences:
 }}"""
 
     try:
-        resp = req.post(
-            f"{OLLAMA_BASE}/api/chat",
-            json={
-                "model": OLLAMA_MODEL,
-                "messages": [{"role": "user", "content": prompt}],
-                "stream": False,
-                "options": {"temperature": 0.1},
-            },
-            timeout=180,
-        )
-        if resp.status_code != 200:
-            raise HTTPException(status_code=502, detail=f"Ollama error {resp.status_code}: {resp.text[:200]}")
-        raw = resp.json()["message"]["content"].strip()
-    except req.exceptions.ConnectionError:
-        raise HTTPException(status_code=503, detail="Ollama is not running. Start it with: ollama serve")
-    except req.exceptions.Timeout:
-        raise HTTPException(status_code=504, detail="Ollama timed out. Try a smaller repo or fewer tasks.")
+        raw = _call_ai_model(prompt)
     except HTTPException:
         raise
     except Exception as e:
@@ -1526,11 +1631,11 @@ Respond ONLY with valid JSON — no extra text, no markdown fences:
     raw = re.sub(r"^```[a-z]*\n?", "", raw).rstrip("` \n")
     match = re.search(r"\{[\s\S]*\}", raw)
     if not match:
-        raise HTTPException(status_code=502, detail="Could not parse Ollama response as JSON.")
+        raise HTTPException(status_code=502, detail="Could not parse AI provider response as JSON.")
     try:
         data_parsed = _json.loads(match.group(0))
     except _json.JSONDecodeError:
-        raise HTTPException(status_code=502, detail="Ollama returned malformed JSON.")
+        raise HTTPException(status_code=502, detail="AI provider returned malformed JSON.")
 
     response_tasks = data_parsed.get("tasks", [])
     results = []

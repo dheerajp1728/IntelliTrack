@@ -33,6 +33,12 @@ services:
         value: "1"
       - key: CORS_ORIGINS
         value: https://intellitrack-frontend.onrender.com
+      - key: AI_PROVIDER
+        value: openai
+      - key: AI_API_BASE
+        value: https://api.openai.com/v1
+      - key: AI_MODEL
+        value: gpt-4o-mini
 
   - type: web
     name: intellitrack-frontend

@@ -206,8 +206,8 @@ export default function AIAnalysis() {
         <div className="mb-4 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-2xl p-4">
           <AlertTriangle className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
           <div className="text-sm text-amber-800">
-            <span className="font-semibold">Ollama is not running.</span>{" "}
-            Start it with: <code className="bg-amber-100 px-1.5 py-0.5 rounded font-mono text-xs">ollama serve</code>
+            <span className="font-semibold">AI model service is offline.</span>{" "}
+            On cloud, this app needs a reachable Ollama-compatible endpoint configured for the backend.
           </div>
         </div>
       )}

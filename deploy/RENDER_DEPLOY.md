@@ -53,9 +53,21 @@ AUTO_CREATE_TABLES=false
 SEED_DATA_ON_STARTUP=false
 CORS_ORIGINS=https://intellitrack-frontend.onrender.com
 PYTHONUNBUFFERED=1
+AI_PROVIDER=openai
+AI_API_BASE=https://api.openai.com/v1
+AI_MODEL=gpt-4o-mini
+AI_API_KEY=<your-hosted-llm-api-key>
 ```
 
 Replace `https://intellitrack-frontend.onrender.com` with your real frontend URL after Render assigns it.
+
+For local Ollama instead, use:
+
+```env
+AI_PROVIDER=ollama
+OLLAMA_BASE=http://localhost:11434
+OLLAMA_MODEL=llama3.2
+```
 
 ## 4. Deploy the Frontend Static Site
 
@@ -125,7 +137,25 @@ Because the backend start command already runs `alembic upgrade head`, schema mi
 
 Render free web services sleep after inactivity. That means your first request before a demo can be slow. If you use Render for the presentation, open the frontend and backend docs a few minutes before presenting.
 
-## 10. Recommended Render Setup for This Repo
+## 10. AI Analysis On Render
+
+The backend now supports both hosted OpenAI-compatible providers and local Ollama.
+
+Why:
+
+- local defaults like `http://localhost:11434` only work on the same machine as the backend process
+- a Render web service cannot talk to Ollama running on your laptop
+- Render free web services are also a poor place to run Ollama itself because model downloads are large, memory is limited, and there is no GPU
+
+To make AI live in cloud, use one of these setups:
+
+1. Recommended on Render: set `AI_PROVIDER=openai`, `AI_API_BASE`, `AI_MODEL`, and `AI_API_KEY` for a hosted OpenAI-compatible provider.
+2. Run Ollama on a separate VM and set backend env vars `AI_PROVIDER=ollama`, `OLLAMA_BASE`, and `OLLAMA_MODEL`.
+3. Keep the main app on Render, but host the AI service separately on infrastructure designed for model inference.
+
+If you do nothing, the rest of the app works, but the AI page will stay offline.
+
+## 11. Recommended Render Setup for This Repo
 
 - Backend: Render Web Service
 - Frontend: Render Static Site
