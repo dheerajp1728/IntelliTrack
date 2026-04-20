@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect } from "react";
 
 const AuthContext = createContext();
+const API_BASE = import.meta.env.VITE_API_URL || `${window.location.origin}/api`;
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
@@ -19,7 +20,7 @@ export const AuthProvider = ({ children }) => {
 
   const validateToken = async (token) => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/auth/me", {
+      const response = await fetch(`${API_BASE}/auth/me`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -44,7 +45,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/auth/login", {
+      const response = await fetch(`${API_BASE}/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -74,7 +75,7 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (name, email, password, role = "Developer", github_url = "") => {
     try {
-      const response = await fetch("http://127.0.0.1:8000/auth/register", {
+      const response = await fetch(`${API_BASE}/auth/register`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

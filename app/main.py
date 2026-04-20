@@ -1,3 +1,5 @@
+import os
+
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -8,7 +10,7 @@ from datetime import timedelta
 from sqlalchemy.orm import Session
 from sqlalchemy import or_, func
 from typing import List, Optional
-from .database import Base, engine, get_db
+from .database import Base, engine, get_db, DATABASE_URL
 from .models import (
     User, DeveloperProfile, Task, Project, Sprint, Issue,
     Comment, ActivityLog, Notification, WikiPage, Label,
@@ -39,16 +41,44 @@ from .seed import seed_data
 
 app = FastAPI(title="IntelliTract Workspace API")
 
+cors_origins = [
+    origin.strip()
+    for origin in os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:5173,http://127.0.0.1:5173",
+    ).split(",")
+    if origin.strip()
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173"],
+    allow_origins=cors_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-Base.metadata.create_all(bind=engine)
-seed_data()
+
+def _env_flag(name: str, default: str = "false") -> bool:
+    return os.getenv(name, default).strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _default_auto_create_tables() -> str:
+    return "true" if DATABASE_URL.startswith("sqlite") else "false"
+
+
+def _default_seed_data_on_startup() -> str:
+    return "true" if DATABASE_URL.startswith("sqlite") else "false"
+
+
+if _env_flag("AUTO_CREATE_TABLES", _default_auto_create_tables()):
+    auto_create_tables_enabled = True
+    Base.metadata.create_all(bind=engine)
+else:
+    auto_create_tables_enabled = False
+
+if _env_flag("SEED_DATA_ON_STARTUP", _default_seed_data_on_startup()):
+    seed_data()
 
 # ── Migrations (safe, idempotent) ─────────────────────────────────────────────
 def _run_migrations():
@@ -61,7 +91,8 @@ def _run_migrations():
         except Exception:
             pass  # Column already exists
 
-_run_migrations()
+if auto_create_tables_enabled:
+    _run_migrations()
 
 
 # ── Root ─────────────────────────────────────────────────────────────────────

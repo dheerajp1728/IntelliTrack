@@ -1,0 +1,43 @@
+databases:
+  - name: intellitrack-db
+    plan: free
+    databaseName: intellitrack
+    user: intellitrack
+
+services:
+  - type: web
+    name: intellitrack-backend
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: alembic upgrade head && python -m uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: intellitrack-db
+          property: connectionString
+      - key: DEBUG
+        value: "false"
+      - key: SECRET_KEY
+        generateValue: true
+      - key: ALGORITHM
+        value: HS256
+      - key: ACCESS_TOKEN_EXPIRE_MINUTES
+        value: "30"
+      - key: AUTO_CREATE_TABLES
+        value: "false"
+      - key: SEED_DATA_ON_STARTUP
+        value: "false"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: CORS_ORIGINS
+        value: https://intellitrack-frontend.onrender.com
+
+  - type: static
+    name: intellitrack-frontend
+    rootDir: frontend
+    buildCommand: npm install && npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_URL
+        value: https://intellitrack-backend.onrender.com/api
