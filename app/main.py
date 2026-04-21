@@ -138,6 +138,40 @@ async def analyze_project(
     return result
 
 
+@app.get("/ai/health")
+async def ai_health_check():
+    """Check if AI service (LLM) is available."""
+    is_healthy = await check_llm_service_health()
+    return {"status": "online" if is_healthy else "offline"}
+
+
+@app.post("/ai/analyze")
+async def ai_analyze_project(
+    repo_url: str,
+    tasks: str,
+    github_token: Optional[str] = None
+):
+    """
+    Analyze project progress using AI (LLM Service).
+    Frontend alias for /llm/analyze endpoint.
+    
+    Parameters:
+    - repo_url: GitHub repository URL
+    - tasks: Newline or semicolon-separated list of tasks
+    - github_token: Optional GitHub token for private repositories
+    
+    Returns:
+    - Analysis results with task progress and overall percentage
+    """
+    result = await analyze_project_progress(repo_url, tasks, github_token)
+    if result is None:
+        raise HTTPException(
+            status_code=503,
+            detail="AI service is unavailable. Please check your LLM configuration."
+        )
+    return result
+
+
 # ── Auth ─────────────────────────────────────────────────────────────────────
 
 @app.post("/auth/register", response_model=Token)
