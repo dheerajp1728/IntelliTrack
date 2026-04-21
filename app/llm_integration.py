@@ -11,7 +11,7 @@ from typing import List, Optional, Dict
 from pydantic import BaseModel
 
 # LLM Service Configuration
-LLM_SERVICE_URL = os.getenv("LLM_SERVICE_URL", "http://localhost:8001")
+LLM_SERVICE_URL = os.getenv("LLM_SERVICE_URL", "https://intellitrack-llm.onrender.com")
 
 
 class LLMProgressRequest(BaseModel):
