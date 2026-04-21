@@ -138,40 +138,6 @@ async def analyze_project(
     return result
 
 
-@app.get("/ai/health")
-async def ai_health_check():
-    """Check if AI service (LLM) is available."""
-    is_healthy = await check_llm_service_health()
-    return {"status": "online" if is_healthy else "offline"}
-
-
-@app.post("/ai/analyze")
-async def ai_analyze_project(
-    repo_url: str,
-    tasks: str,
-    github_token: Optional[str] = None
-):
-    """
-    Analyze project progress using AI (LLM Service).
-    Frontend alias for /llm/analyze endpoint.
-    
-    Parameters:
-    - repo_url: GitHub repository URL
-    - tasks: Newline or semicolon-separated list of tasks
-    - github_token: Optional GitHub token for private repositories
-    
-    Returns:
-    - Analysis results with task progress and overall percentage
-    """
-    result = await analyze_project_progress(repo_url, tasks, github_token)
-    if result is None:
-        raise HTTPException(
-            status_code=503,
-            detail="AI service is unavailable. Please check your LLM configuration."
-        )
-    return result
-
-
 # ── Auth ─────────────────────────────────────────────────────────────────────
 
 @app.post("/auth/register", response_model=Token)
@@ -1650,78 +1616,19 @@ def _fetch_repo_code(repo_url: str, token: Optional[str]) -> str:
 
 
 @app.get("/ai/health")
-def ai_health():
-    """Check whether the configured AI provider is reachable."""
-    return _check_ai_health()
+async def ai_health():
+    """Check if AI service (LLM) is reachable."""
+    is_healthy = await check_llm_service_health()
+    return {"status": "online" if is_healthy else "offline"}
 
 
 @app.post("/ai/analyze")
-def ai_analyze(data: AIAnalyzeRequest, current_user: User = Depends(get_current_user_from_request)):
-    import requests as req, json as _json, re
-
-    # 1. Fetch repo code
-    code_context = _fetch_repo_code(data.repo_url, data.github_token)
-    if not code_context:
-        code_context = "(Could not fetch repository code — check the URL)"
-
-    # 2. Build task list
-    tasks = [t.strip() for t in data.tasks.replace(";", "\n").splitlines() if t.strip()]
-    if not tasks:
-        raise HTTPException(status_code=400, detail="No tasks provided.")
-    task_list = "\n".join(f"{i+1}. {t}" for i, t in enumerate(tasks))
-
-    # 3. Call Ollama
-    prompt = f"""You are a software project analyst. Given the repository code below and a list of sprint tasks, determine the implementation status of each task.
-
-REPOSITORY CODE:
-{code_context}
-
-TASKS:
-{task_list}
-
-For each task respond with its status (done / in progress / not started) and a brief 4-8 word summary of what you found.
-
-Respond ONLY with valid JSON — no extra text, no markdown fences:
-{{
-  "overall_progress": <0-100>,
-  "tasks": [
-    {{"status": "done", "summary": "short description"}},
-    ...
-  ]
-}}"""
-
-    try:
-        raw = _call_ai_model(prompt)
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-    # 4. Parse JSON from response (strip any accidental markdown fences)
-    raw = re.sub(r"^```[a-z]*\n?", "", raw).rstrip("` \n")
-    match = re.search(r"\{[\s\S]*\}", raw)
-    if not match:
-        raise HTTPException(status_code=502, detail="Could not parse AI provider response as JSON.")
-    try:
-        data_parsed = _json.loads(match.group(0))
-    except _json.JSONDecodeError:
-        raise HTTPException(status_code=502, detail="AI provider returned malformed JSON.")
-
-    response_tasks = data_parsed.get("tasks", [])
-    results = []
-    for i, task in enumerate(tasks):
-        if i < len(response_tasks):
-            st = response_tasks[i].get("status", "not started").strip().lower()
-            summary = response_tasks[i].get("summary", "").strip() or "Analyzed"
-            if "done" in st:
-                st = "done"
-            elif "progress" in st:
-                st = "in progress"
-            else:
-                st = "not started"
-        else:
-            st, summary = "not started", "No analysis"
-        results.append({"task": task, "progress": f"[{st}] - {summary}"})
-
-    percent = max(0, min(100, int(data_parsed.get("overall_progress", 0))))
-    return {"results": results, "progress_percent": percent}
+async def ai_analyze(data: AIAnalyzeRequest, current_user: User = Depends(get_current_user_from_request)):
+    """Analyze project progress using LLM service."""
+    result = await analyze_project_progress(data.repo_url, data.tasks, data.github_token)
+    if result is None:
+        raise HTTPException(
+            status_code=503,
+            detail="AI service is unavailable. Please check your LLM configuration."
+        )
+    return result
