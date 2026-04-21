@@ -38,6 +38,7 @@ from .auth import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
 )
 from .seed import seed_data
+from .llm_integration import analyze_project_progress, check_llm_service_health
 
 app = FastAPI(title="IntelliTract Workspace API")
 
@@ -100,6 +101,41 @@ if auto_create_tables_enabled:
 @app.get("/")
 def root():
     return {"message": "IntelliTract Workspace API is running"}
+
+
+# ── LLM Integration ──────────────────────────────────────────────────────────
+
+@app.get("/llm/health")
+async def llm_health_check():
+    """Check if the LLM service is available."""
+    is_healthy = await check_llm_service_health()
+    return {"status": "ok" if is_healthy else "unavailable", "llm_service": is_healthy}
+
+
+@app.post("/llm/analyze")
+async def analyze_project(
+    repo_url: str,
+    tasks: str,
+    github_token: Optional[str] = None
+):
+    """
+    Analyze project progress using LLM.
+    
+    Parameters:
+    - repo_url: GitHub repository URL
+    - tasks: Semicolon-separated list of tasks to analyze
+    - github_token: Optional GitHub token for private repositories
+    
+    Returns:
+    - Analysis results with task progress and overall percentage
+    """
+    result = await analyze_project_progress(repo_url, tasks, github_token)
+    if result is None:
+        raise HTTPException(
+            status_code=503,
+            detail="LLM service is unavailable. Please check your configuration."
+        )
+    return result
 
 
 # ── Auth ─────────────────────────────────────────────────────────────────────
