@@ -40,8 +40,7 @@ services:
       - key: AI_MODEL
         value: gpt-4o-mini
       - key: LLM_SERVICE_URL
-        value: # Set this to your deployed IntelliTrack_llm service URL after deployment
-        # Example: https://intellitrack-llm.onrender.com
+        value: https://intellitrack-llm.onrender.com
 
   - type: web
     name: intellitrack-frontend
