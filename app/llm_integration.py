@@ -53,26 +53,35 @@ async def analyze_project_progress(
             "github_token": github_token,
         }
         
+        print(f"[LLM Integration] Sending request to {LLM_SERVICE_URL}/progress")
+        print(f"[LLM Integration] Payload: {payload}")
+        
         response = requests.post(
             f"{LLM_SERVICE_URL}/progress",
             json=payload,
             timeout=300  # 5 minutes for LLM analysis
         )
         
+        print(f"[LLM Integration] Response Status: {response.status_code}")
+        print(f"[LLM Integration] Response Body: {response.text[:500]}")
+        
         if response.status_code == 200:
             return LLMResponse(**response.json())
         else:
-            print(f"LLM Service Error: {response.status_code} - {response.text}")
+            print(f"❌ LLM Service Error: {response.status_code}")
+            print(f"❌ Response: {response.text}")
             return None
             
-    except requests.exceptions.ConnectionError:
-        print(f"Could not connect to LLM Service at {LLM_SERVICE_URL}")
+    except requests.exceptions.ConnectionError as e:
+        print(f"❌ Could not connect to LLM Service at {LLM_SERVICE_URL}: {str(e)}")
         return None
-    except requests.exceptions.Timeout:
-        print("LLM Service request timeout")
+    except requests.exceptions.Timeout as e:
+        print(f"❌ LLM Service request timeout: {str(e)}")
         return None
     except Exception as e:
-        print(f"Error calling LLM Service: {str(e)}")
+        print(f"❌ Error calling LLM Service: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return None
 
 
